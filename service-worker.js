@@ -4,73 +4,77 @@ let banList;
 let banListJson;
 let reportList = [];
 let alarms;
-chrome.runtime.onStartup.addListener(chrome.alarms.clearAll())
-async function fetchalarm(){
-    return await chrome.alarms.get('keepAliveAlarm')
-}
-fetchalarm().then((val) => alarms = val)
-console.log(alarms)
-if(!alarms){
-startup()
-}
-chrome.runtime.onInstalled.addListener(() => {
-    console.log("Installed")
-    chrome.alarms.clearAll()
-    startup()
-})
 
-chrome.alarms.onAlarm.addListener((alarm) => {
-    console.log("KeepAlive triggered")
+browser.runtime.onStartup.addListener(() => browser.alarms.clearAll());
+
+async function fetchalarm() {
+    return await browser.alarms.get('keepAliveAlarm');
+}
+
+fetchalarm().then((val) => alarms = val);
+console.log(alarms);
+
+if (!alarms) {
+    startup();
+}
+
+browser.runtime.onInstalled.addListener(() => {
+    console.log("Installed");
+    browser.alarms.clearAll();
+    startup();
+});
+
+browser.alarms.onAlarm.addListener((alarm) => {
+    console.log("KeepAlive triggered");
     alarms = alarm;
-})
+});
 
-async function startup(){
-    console.log("fetched")
+async function startup() {
+    console.log("fetched");
     let response = await fetch("https://api.veljkokovacevic.com/buster/list");
-    await response.text().then((result) => {fetchBanList(result)});
-    chrome.alarms.create('keepAliveAlarm', {delayInMinutes: 0, periodInMinutes: 0.5})
+    await response.text().then((result) => { fetchBanList(result) });
+    browser.alarms.create('keepAliveAlarm', { delayInMinutes: 0, periodInMinutes: 0.5 });
 }
 
-function fetchBanList(res){
-    console.log("res")
+function fetchBanList(res) {
+    console.log("res");
     console.log(res);
-    banListJson = JSON.parse(res)
+    banListJson = JSON.parse(res);
     console.log(banListJson);
-    console.log("initialized")
-    chrome.runtime.onMessage.addListener((request, sender, resp) => {
-        switch(request.command){
-            case "list":
-                resp({banListJson, reportList});
-                return true;
-                break;
-            case "report":
-                if(reportCheck(request.user))
-                {   
-                    resp(reportList)
-                    return true;
-                }
-                    console.log("reporting")
-                console.log(sender)
-                reportList.push(request.user)
-                fetch("https://api.veljkokovacevic.com/buster/report",{
-                    method: "POST",
-                    body: request.user
-                });
-                resp(reportList)
-                return true;
-                break;
-            default:
-                resp("WTF")
-                return false;
-                break;
-        }
-    })
+    console.log("initialized");
+
+    browser.runtime.onMessage.addListener((request, sender) => {
+        return new Promise((resolve) => {
+            switch (request.command) {
+                case "list":
+                    resolve({ banListJson, reportList });
+                    break;
+                case "report":
+                    if (reportCheck(request.user)) {
+                        resolve(reportList);
+                        break;
+                    }
+                    console.log("reporting");
+                    console.log(sender);
+                    reportList.push(request.user);
+                    fetch("https://api.veljkokovacevic.com/buster/report", {
+                        method: "POST",
+                        body: request.user
+                    });
+                    resolve(reportList);
+                    break;
+                default:
+                    resolve("WTF");
+                    break;
+            }
+        });
+    });
 }
 
-function reportCheck(name){
+function reportCheck(name) {
     let found = false;
     reportList.forEach((rep) => {
-        if(name == rep) found = true;
-    })
+        if (name === rep) found = true;
+    });
     return found;
 }
