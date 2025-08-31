@@ -1,26 +1,26 @@
 console.log("Journey-Buster Injected");
 
-const flairCss = "font-size:10pt;border-radius:100px;margin:2px;padding:0 10px;background-color:#CC3333;color:white;";
 const aiUserFlair = document.createElement("span");
-aiUserFlair.style = flairCss;
+aiUserFlair.style.cssText = "font-size:10pt;border-radius:100px;margin:2px;padding:0 10px;background-color:#CC3333;color:white;";
+aiUserFlair.className = "jb_AIFlair";
 aiUserFlair.textContent = "AI USER";
 
 const reportButton = document.createElement("button");
-reportButton.style =
+reportButton.style.cssText =
   "cursor:pointer;font-weight:bold;font-family:TwitterChirp;margin:10px 0 5px 0;padding:5px 10px;border-radius:2px;width:140px;background-color:#c96f32;border:none;";
-reportButton.textContent = "Report AI Content";
 reportButton.className = "jb_RepBtn";
+reportButton.textContent = "Report AI Content";
 
 const aiUserProfileFlair = document.createElement("div");
-aiUserProfileFlair.style =
+aiUserProfileFlair.style.cssText =
   "font-family:TwitterChirp;border-radius:2px;padding:10px;margin-top:3px;background-color:#331111;text-overflow:unset;";
+aiUserProfileFlair.className = "jb_aiProfileFlair";
 aiUserProfileFlair.innerHTML = `
   <div style="font-weight:bold;">AI User</div>
   <br/>
   <div>This Twitter Account has been flagged for using, generating or advertising images generated with Artificial Intelligence, and passing it off as original content.</div>
   <span style="font-size:8pt;font-family:TwitterChirp;color:#AA4545">Journey-Buster</span>
 `;
-aiUserProfileFlair.className = "jb_aiProfileFlair";
 
 let repList = [];
 let bLJson = {};
@@ -114,11 +114,32 @@ async function initProfileUI() {
       }
     }
   } catch (e) {
-    console.warn(e);
+    console.warn("Profile UI not loaded yet:", e);
   }
 }
 
-// ----- SPA-aware URL observer -----
+const timelineObserver = new MutationObserver((mutations) => {
+    mutations.forEach((mut) => {
+        mut.addedNodes.forEach((node) => {
+            if (node.nodeType !== 1) return; 
+
+            const userSpans = node.querySelectorAll("[data-testid='User-Name'] span");
+            userSpans.forEach((userSpan) => {
+                const username = userSpan.textContent.slice(1);
+                if (listCheck(username)) {
+                    if (!userSpan.querySelector(".jb_AIFlair")) {
+                        userSpan.innerHTML += aiUserFlair.outerHTML;
+
+                        const cellDiv = userSpan.closest("[data-testid='cellInnerDiv']");
+                        if (cellDiv) cellDiv.style.backgroundColor = "#221111";
+                    }
+                }
+            });
+        });
+    });
+});
+
+
 let oldHref = location.href;
 const urlObserver = new MutationObserver(() => {
   if (oldHref !== location.href) {
@@ -127,9 +148,9 @@ const urlObserver = new MutationObserver(() => {
   }
 });
 
-// ----- Initialize -----
 (async function init() {
   await loadBanList();
   await initProfileUI();
+  timelineObserver.observe(document.body, { childList: true, subtree: true });
   urlObserver.observe(document.body, { childList: true, subtree: true });
 })();
