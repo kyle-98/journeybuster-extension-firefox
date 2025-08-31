@@ -1,26 +1,32 @@
 {
-    "manifest_version": 3,
-    "name": "Journey Buster 3",
-    "description": "Want to know if a Twitter page is using AI content? This extension does just that.",
-    "version": "3.4.7",
-    "icons": {
-        "16": "images/icon16.png",
-        "48": "images/icon48.png",
-        "128": "images/icon128.png"
-    },
-    "action": {
-        "default_title": "Journey-Buster 3",
-        "default_popup": "popup.html"
-    },
-    "permissions": ["alarms", "storage"],
-    "host_permissions": ["https://*.veljkokovacevic.com/*", "https://*.journeybuster.com/*"],
-    "background": {
-        "service_worker": "service-worker.js"
-    },
-    "content_scripts": [{
-        "js": ["foreground.js"],
-        "all_frames": false,
-        "matches": ["https://twitter.com/*"]
-    }],
-    "minimum_chrome_version": "120"
+  "manifest_version": 2,
+  "name": "Journey Buster 3",
+  "description": "Want to know if a Twitter page is using AI content? This extension does just that.",
+  "version": "3.4.7",
+  "icons": {
+    "16": "images/icon16.png",
+    "48": "images/icon48.png",
+    "128": "images/icon128.png"
+  },
+  "browser_action": {
+    "default_title": "Journey-Buster 3",
+    "default_popup": "popup.html"
+  },
+  "permissions": [
+    "alarms",
+    "storage",
+    "https://*.veljkokovacevic.com/*",
+    "https://*.journeybuster.com/*"
+  ],
+  "background": {
+    "scripts": ["service-worker.js"],
+    "persistent": true
+  },
+  "content_scripts": [
+    {
+      "js": ["foreground.js"],
+      "matches": ["https://twitter.com/*", "https://x.com/*"],
+      "all_frames": false
+    }
+  ]
 }
